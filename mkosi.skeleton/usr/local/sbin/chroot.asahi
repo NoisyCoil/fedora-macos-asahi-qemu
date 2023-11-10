@@ -1,11 +1,22 @@
 #!/bin/bash
 
 systemctl daemon-reload
-root_fs=$(blkid -s TYPE -o value /dev/vdd)
+root_dev=/dev/vdd
+root_dev_fs=$(blkid -s TYPE -o value $root_dev)
+
+if [[ $root_dev_fs == "crypto_LUKS" ]]; then
+    crypto_root_dev=$root_dev
+    root_mapped_dev=fedora-root
+    root_dev=/dev/mapper/$root_mapped_dev
+    [[ -e $root_dev ]] || cryptsetup open $crypto_root_dev $root_mapped_dev
+    root_fs=$(blkid -s TYPE -o value $root_dev)
+else
+    root_fs=$root_dev_fs
+fi
 
 [[ $root_fs == "btrfs" ]] && root_options='-o subvol=root' && home_options='-o subvol=home'
-[[ -z "$(findmnt -n /mnt)" ]] && mount /dev/vdd $root_options /mnt
-[[ -n $home_options ]] && [[ -z "$(findmnt -n /mnt/home)" ]] && mount /dev/vdd $home_options /mnt/home
+[[ -z "$(findmnt -n /mnt)" ]] && mount $root_dev $root_options /mnt
+[[ -n $home_options ]] && [[ -z "$(findmnt -n /mnt/home)" ]] && mount $root_dev $home_options /mnt/home
 [[ -z "$(findmnt -n /mnt/boot)" ]] && mount /dev/vdc /mnt/boot
 [[ -z "$(findmnt -n /mnt/boot/efi)" ]] && mount /dev/vdb /mnt/boot/efi
 

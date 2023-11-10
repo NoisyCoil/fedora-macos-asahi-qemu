@@ -4,3 +4,4 @@
 [[ "$(findmnt -n /mnt/boot)" ]] && umount /mnt/boot
 [[ "$(findmnt -n /mnt/home)" ]] && umount /mnt/home
 [[ "$(findmnt -n /mnt)" ]] && umount /mnt
+[[ -e /dev/mapper/fedora-root ]] && cryptsetup close fedora-root
